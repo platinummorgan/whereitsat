@@ -7,6 +7,8 @@ import 'package:uuid/uuid.dart';
 import '../domain/loan.dart';
 import '../domain/item.dart';
 import '../data/providers.dart';
+import '../data/notifications.dart';
+import '../ui/settings.dart';
 import 'add_item.dart';
 
 class AddLoanSheet extends ConsumerStatefulWidget {
@@ -44,7 +46,8 @@ class _AddLoanSheetState extends ConsumerState<AddLoanSheet> {
       return;
     }
     setState(() => _saving = true);
-    final repo = ref.read(loanRepoProvider);
+  final repo = ref.read(loanRepoProvider);
+  final itemRepo = ref.read(itemRepoProvider);
     final now = DateTime.now();
     final loan = Loan(
       id: Uuid().v4(),
@@ -59,6 +62,18 @@ class _AddLoanSheetState extends ConsumerState<AddLoanSheet> {
       returnedOn: null,
     );
     await repo.add(loan);
+    // Schedule notification if dueOn is set and reminders enabled
+    final remindersEnabled = ref.read(reminderEnabledProvider);
+    final reminderTime = ref.read(reminderTimeProvider);
+    if (loan.dueOn != null && remindersEnabled) {
+      await scheduleLoanNotification(
+        loanId: loan.id,
+        itemName: itemRepo.get(loan.itemId)?.name ?? '',
+        dueDate: loan.dueOn!,
+        reminderTime: reminderTime,
+        oneDayBefore: true,
+      );
+    }
     setState(() => _saving = false);
     if (mounted) {
       Navigator.of(context).pop(loan);

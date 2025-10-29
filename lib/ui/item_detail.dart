@@ -5,6 +5,7 @@ import '../domain/item.dart';
 import '../domain/loan.dart';
 import '../domain/stash.dart';
 import '../data/providers.dart';
+import '../data/notifications.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ItemDetailScreen extends ConsumerStatefulWidget {
@@ -61,6 +62,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                 String? photoUri;
                 if (_returnPhoto != null) photoUri = _returnPhoto!.uri.toString();
                 await loanRepo.markReturned(activeLoan.id, returnPhoto: photoUri, returnedOn: DateTime.now());
+                await cancelLoanNotification(activeLoan.id);
                 setState(() => _markingReturned = false);
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Marked as returned')));
               },

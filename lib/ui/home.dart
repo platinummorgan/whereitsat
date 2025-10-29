@@ -60,12 +60,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final now = ref.watch(clockProvider).now();
     final allLoans = repo.box.values.toList();
     final filtered = _filterLoans(allLoans, _loanFilter, _loanSearch, now);
-    final overdue = filtered.where((l) => l.status == LoanStatus.out && l.dueOn != null && l.dueOn!.isBefore(now)).toList();
+  final overdue = filtered.where((l) => l.status == LoanStatus.out && l.dueOn != null && l.dueOn!.isBefore(now)).toList();
     final out = filtered.where((l) => l.status == LoanStatus.out && (l.dueOn == null || l.dueOn!.isAfter(now))).toList();
     final returned = filtered.where((l) => l.status == LoanStatus.returned).toList();
     return Column(
       children: [
-        _buildLoanFilterChips(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildLoanFilterChips(),
+            if (overdue.isNotEmpty)
+              Chip(
+                label: Text('Overdue: ${overdue.length}'),
+                backgroundColor: Colors.red.shade100,
+                labelStyle: const TextStyle(color: Colors.red),
+              ),
+          ],
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: TextField(
