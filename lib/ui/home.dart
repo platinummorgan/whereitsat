@@ -4,6 +4,9 @@ import '../data/providers.dart';
 import '../domain/item.dart';
 import '../domain/loan.dart';
 import '../domain/stash.dart';
+import 'add_item.dart';
+import 'add_loan.dart';
+import 'add_stash.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -254,14 +257,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ElevatedButton.icon(
               icon: const Icon(Icons.assignment),
               label: const Text('New Loan'),
-              onPressed: () {/* TODO: New Loan */},
+              onPressed: () async {
+                final loan = await showModalBottomSheet(context: context, builder: (_) => const AddLoanSheet());
+                if (loan != null) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Loan saved!')));
+                  // TODO: Navigate to ItemDetail
+                }
+              },
               style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               icon: const Icon(Icons.inventory_2),
               label: const Text('New Stash'),
-              onPressed: () {/* TODO: New Stash */},
+              onPressed: () async {
+                final stash = await showModalBottomSheet(context: context, builder: (_) => const AddStashSheet());
+                if (stash != null) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Stash saved!')));
+                  // TODO: Navigate to ItemDetail
+                }
+              },
               style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
             ),
             const SizedBox(height: 16),
@@ -269,7 +286,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 child: const Text('New Item'),
-                onPressed: () {/* TODO: New Item */},
+                onPressed: () async {
+                  final item = await showModalBottomSheet(context: context, builder: (_) => const AddItemSheet());
+                  if (item != null) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item saved!')));
+                    // TODO: Navigate to ItemDetail
+                  }
+                },
               ),
             ),
           ],
