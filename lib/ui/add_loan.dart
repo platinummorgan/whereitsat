@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/services.dart';
 import '../domain/loan.dart';
 import '../domain/item.dart';
 import '../data/providers.dart';
@@ -12,7 +13,7 @@ import '../ui/settings.dart';
 import 'add_item.dart';
 
 class AddLoanSheet extends ConsumerStatefulWidget {
-  const AddLoanSheet({Key? key}) : super(key: key);
+  const AddLoanSheet({super.key});
   @override
   ConsumerState<AddLoanSheet> createState() => _AddLoanSheetState();
 }
@@ -28,11 +29,26 @@ class _AddLoanSheetState extends ConsumerState<AddLoanSheet> {
 
   Future<void> _pickPhoto(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source);
-    if (picked != null) {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = await File(picked.path).copy('${dir.path}/${Uuid().v4()}.jpg');
-      setState(() => _photo = file);
+    try {
+      final picked = await picker.pickImage(source: source);
+      if (picked != null) {
+        final dir = await getApplicationDocumentsDirectory();
+        final file = await File(picked.path).copy('${dir.path}/${Uuid().v4()}.jpg');
+        setState(() => _photo = file);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Camera or storage permission denied.'),
+          action: SnackBarAction(
+            label: 'Settings',
+            onPressed: () {
+              // Open app settings
+              // ...existing code...
+            },
+          ),
+        ),
+      );
     }
   }
 
@@ -45,7 +61,10 @@ class _AddLoanSheetState extends ConsumerState<AddLoanSheet> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select or create an item')));
       return;
     }
-    setState(() => _saving = true);
+  setState(() => _saving = true);
+  HapticFeedback.lightImpact();
+    import 'package:flutter/services.dart';
+    HapticFeedback.lightImpact();
   final repo = ref.read(loanRepoProvider);
   final itemRepo = ref.read(itemRepoProvider);
     final now = DateTime.now();
@@ -93,7 +112,7 @@ class _AddLoanSheetState extends ConsumerState<AddLoanSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: _selectedItemId,
+              initialValue: _selectedItemId,
               items: items.map((i) => DropdownMenuItem(value: i.id, child: Text(i.name))).toList(),
               onChanged: (v) => setState(() => _selectedItemId = v),
               decoration: const InputDecoration(labelText: 'Item'),

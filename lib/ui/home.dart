@@ -9,7 +9,7 @@ import 'add_loan.dart';
 import 'add_stash.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
@@ -150,7 +150,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             trailing: _loanStatusBadge(loan.status),
             onTap: () {/* TODO: Navigate to ItemDetail */},
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -227,19 +227,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             subtitle: Text('${stash.placeName} • ${_formatDate(stash.storedOn)}'),
             onTap: () {/* TODO: Navigate to ItemDetail */},
           );
-        }).toList(),
+        }),
       ],
     );
   }
 
   Widget _emptyState(IconData icon, String message) {
+    final isLoan = icon == Icons.assignment_late;
+    final isStash = icon == Icons.inventory_2;
     return Padding(
       padding: const EdgeInsets.all(32.0),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: Colors.grey),
+          Icon(icon, size: 72, color: Colors.grey, semanticLabel: message),
           const SizedBox(height: 16),
-          Text(message, style: const TextStyle(color: Colors.grey)),
+          Text(
+            isLoan
+                ? 'No loans yet. Track who has your stuff and when it’s due.'
+                : isStash
+                    ? 'No stashes yet. Organize where you keep things.'
+                    : message,
+            style: const TextStyle(color: Colors.grey, fontSize: 18),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          if (isLoan)
+            ElevatedButton.icon(
+              icon: const Icon(Icons.assignment, size: 32),
+              label: const Text('New Loan', textScaleFactor: 1.2),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(180, 56)),
+              onPressed: () => _showFabModal(context),
+            ),
+          if (isStash)
+            ElevatedButton.icon(
+              icon: const Icon(Icons.inventory_2, size: 32),
+              label: const Text('New Stash', textScaleFactor: 1.2),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(180, 56)),
+              onPressed: () => _showFabModal(context),
+            ),
         ],
       ),
     );

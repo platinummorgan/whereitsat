@@ -4,13 +4,14 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/services.dart';
 import '../domain/stash.dart';
 import '../domain/item.dart';
 import '../data/providers.dart';
 import 'add_item.dart';
 
 class AddStashSheet extends ConsumerStatefulWidget {
-  const AddStashSheet({Key? key}) : super(key: key);
+  const AddStashSheet({super.key});
   @override
   ConsumerState<AddStashSheet> createState() => _AddStashSheetState();
 }
@@ -24,11 +25,26 @@ class _AddStashSheetState extends ConsumerState<AddStashSheet> {
 
   Future<void> _pickPhoto(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source);
-    if (picked != null) {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = await File(picked.path).copy('${dir.path}/${Uuid().v4()}.jpg');
-      setState(() => _photo = file);
+    try {
+      final picked = await picker.pickImage(source: source);
+      if (picked != null) {
+        final dir = await getApplicationDocumentsDirectory();
+        final file = await File(picked.path).copy('${dir.path}/${Uuid().v4()}.jpg');
+        setState(() => _photo = file);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Camera or storage permission denied.'),
+          action: SnackBarAction(
+            label: 'Settings',
+            onPressed: () {
+              // Open app settings
+              // ...existing code...
+            },
+          ),
+        ),
+      );
     }
   }
 
@@ -41,7 +57,10 @@ class _AddStashSheetState extends ConsumerState<AddStashSheet> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select or create an item')));
       return;
     }
-    setState(() => _saving = true);
+  setState(() => _saving = true);
+  HapticFeedback.lightImpact();
+    import 'package:flutter/services.dart';
+    HapticFeedback.lightImpact();
     final repo = ref.read(stashRepoProvider);
     final now = DateTime.now();
     final stash = Stash(
@@ -73,7 +92,7 @@ class _AddStashSheetState extends ConsumerState<AddStashSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: _selectedItemId,
+              initialValue: _selectedItemId,
               items: items.map((i) => DropdownMenuItem(value: i.id, child: Text(i.name))).toList(),
               onChanged: (v) => setState(() => _selectedItemId = v),
               decoration: const InputDecoration(labelText: 'Item'),

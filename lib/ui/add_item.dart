@@ -4,11 +4,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/services.dart';
 import '../domain/item.dart';
 import '../data/providers.dart';
 
 class AddItemSheet extends ConsumerStatefulWidget {
-  const AddItemSheet({Key? key}) : super(key: key);
+  const AddItemSheet({super.key});
   @override
   ConsumerState<AddItemSheet> createState() => _AddItemSheetState();
 }
@@ -17,16 +18,31 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
   final _nameController = TextEditingController();
   final _categoryController = TextEditingController();
   final _tagsController = TextEditingController();
-  List<File> _photos = [];
+  final List<File> _photos = [];
   bool _saving = false;
 
   Future<void> _pickPhoto(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source);
-    if (picked != null) {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = await File(picked.path).copy('${dir.path}/${Uuid().v4()}.jpg');
-      setState(() => _photos.add(file));
+    try {
+      final picked = await picker.pickImage(source: source);
+      if (picked != null) {
+        final dir = await getApplicationDocumentsDirectory();
+        final file = await File(picked.path).copy('${dir.path}/${Uuid().v4()}.jpg');
+        setState(() => _photos.add(file));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Camera or storage permission denied.'),
+          action: SnackBarAction(
+            label: 'Settings',
+            onPressed: () {
+              // Open app settings
+              // ...existing code...
+            },
+          ),
+        ),
+      );
     }
   }
 
@@ -35,7 +51,10 @@ class _AddItemSheetState extends ConsumerState<AddItemSheet> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Name required')));
       return;
     }
-    setState(() => _saving = true);
+  setState(() => _saving = true);
+  HapticFeedback.lightImpact();
+  import 'package:flutter/services.dart';
+  HapticFeedback.lightImpact();
     final repo = ref.read(itemRepoProvider);
     final now = DateTime.now();
     final item = Item(
