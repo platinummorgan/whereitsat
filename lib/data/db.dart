@@ -12,4 +12,5 @@ Future<void> initDb() async {
   await Hive.openBox<Item>('items');
   await Hive.openBox<Loan>('loans');
   await Hive.openBox<Stash>('stashes');
+  await Hive.openBox('settings');
 }
