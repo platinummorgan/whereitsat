@@ -7,10 +7,13 @@ import '../domain/stash.dart';
 import '../data/providers.dart';
 import '../data/notifications.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:who_has_it/data/export.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:printing/printing.dart';
 
 class ItemDetailScreen extends ConsumerStatefulWidget {
   final String itemId;
-  const ItemDetailScreen({Key? key, required this.itemId}) : super(key: key);
+  const ItemDetailScreen({super.key, required this.itemId});
   @override
   ConsumerState<ItemDetailScreen> createState() => _ItemDetailScreenState();
 }
@@ -42,7 +45,40 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
         IconButton(icon: const Icon(Icons.edit), onPressed: () {/* TODO: Edit item */}),
         IconButton(icon: const Icon(Icons.assignment), onPressed: () {/* TODO: New loan */}),
         IconButton(icon: const Icon(Icons.inventory_2), onPressed: () {/* TODO: New stash */}),
-        IconButton(icon: const Icon(Icons.share), onPressed: () {/* TODO: Share/Export */}),
+        IconButton(
+          icon: const Icon(Icons.share),
+          onPressed: () {
+            showModalBottomSheet(context: context, builder: (ctx) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.table_chart),
+                    title: const Text('Export as CSV'),
+                    onTap: () async {
+                      Navigator.of(ctx).pop();
+                      final loans = loanRepo.box.values.where((l) => l.itemId == item.id).toList();
+                      final stashes = stashRepo.box.values.where((s) => s.itemId == item.id).toList();
+                      final file = await exportItemsCsv([item], loans, stashes);
+                      await Share.shareXFiles([XFile(file.path)], text: 'Exported Item CSV');
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.picture_as_pdf),
+                    title: const Text('Export as PDF'),
+                    onTap: () async {
+                      Navigator.of(ctx).pop();
+                      final loans = loanRepo.box.values.where((l) => l.itemId == item.id).toList();
+                      final stashes = stashRepo.box.values.where((s) => s.itemId == item.id).toList();
+                      final file = await exportSummaryPdf(items: [item], loans: loans, stashes: stashes);
+                      await Printing.sharePdf(bytes: await file.readAsBytes(), filename: 'who_has_it_item_${item.name}.pdf');
+                    },
+                  ),
+                ],
+              );
+            });
+          },
+        ),
       ]),
       body: ListView(
         padding: const EdgeInsets.all(16),
