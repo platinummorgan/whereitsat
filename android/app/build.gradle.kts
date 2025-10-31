@@ -1,42 +1,62 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
+    id("org.jetbrains.kotlin.android") // ✅ correct plugin id
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
-    namespace = "com.platlabs.who_has_it"
+    namespace = "com.platovalabs.where_its_at"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+           sourceCompatibility = JavaVersion.VERSION_17
+           targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true // ✅ needed with desugar dep below
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+    jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
-        applicationId = "com.platlabs.who_has_it"
-        minSdk = 23
-        targetSdk = flutter.targetSdkVersion
+        applicationId = "com.platovalabs.where_its_at"
+        minSdk = flutter.minSdkVersion // ✅ we planned API 23+
+        targetSdk = 34 // ✅ explicit; keep in sync with Flutter if it changes
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
-    buildTypes {
+    signingConfigs {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            storeFile = file("my-release-key.jks")
+            storePassword = "mich@3l9"
+            keyAlias = "my-key-alias"
+            keyPassword = "mich@3l9"
         }
     }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            minifyEnabled = false
+            shrinkResources = false
+            // proguardFiles(
+            //     getDefaultProguardFile("proguard-android-optimize.txt"),
+            //     "proguard-rules.pro"
+            // )
+        }
+    }
+
     buildFeatures {
         viewBinding = true
     }
+}
+
+// ✅ dependencies must be top-level (not inside `android {}`)
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

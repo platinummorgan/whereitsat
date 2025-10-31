@@ -1,14 +1,45 @@
 
-# who_has_it
+# Where its at
 
-**who_has_it** is an offline-first Flutter app for Android that helps you track items you lend to others (with due dates and contacts) and where you stash your own items (with photos of their locations). No backend required—your data is stored locally and securely. Features include notifications, biometric/PIN lock, sharing, CSV/PDF export, and more.
+**Where its at** is an offline-first Flutter app for Android that helps you track items you lend to others (with due dates and contacts) and where you stash your own items (with photos of their locations). No backend required—your data is stored locally and securely. Features include notifications, biometric/PIN lock, sharing, CSV/PDF export, and more.
 
-## 7-Day Build Plan
+## Android Release & Play Console Checklist
 
-**Day 1 (Oct 29):** Scaffold project, set up dependencies, Android config, and local DB structure.
-**Day 2:** Design main UI flows (lend, stash, item details, navigation).
-**Day 3:** Implement Hive models, item CRUD, and offline storage logic.
-**Day 4:** Add photo capture/location features, image picker, and permissions.
-**Day 5:** Integrate notifications, due date reminders, and biometric/PIN lock.
-**Day 6:** Add export (CSV/PDF), sharing features.
-**Day 7:** Polish UI, test, bugfix, and prepare for release.
+### Keystore & Signing
+
+1. Generate a keystore:
+	 ```sh
+	 keytool -genkey -v -keystore release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias whereitsat
+	 ```
+2. Place `release-key.jks` in `android/app/`.
+3. Edit `android/app/build.gradle.kts`:
+	 ```kotlin
+	 signingConfigs {
+		 release {
+			 storeFile = file("release-key.jks")
+			 storePassword = "your-password"
+			 keyAlias = "whereitsat"
+			 keyPassword = "your-password"
+		 }
+	 }
+	 buildTypes {
+		 release {
+			 signingConfig = signingConfigs.getByName("release")
+		 }
+	 }
+	 ```
+4. Build release APK/AAB:
+	 ```sh
+	 flutter build appbundle --release
+	 flutter build apk --release
+	 ```
+
+### Play Console Checklist
+
+- [ ] App bundle uploaded
+- [ ] VersionCode/VersionName match pubspec.yaml
+- [ ] Keystore configured for release
+- [ ] Privacy policy uploaded
+- [ ] Screenshots and description added
+- [ ] Permissions declared (camera, notifications, storage)
+- [ ] Manual tests passed (see QA/checklist.md)

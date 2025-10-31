@@ -2,13 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/services.dart';
+
 import '../domain/stash.dart';
 import '../domain/item.dart';
 import '../data/providers.dart';
-import 'add_item.dart';
+import '../data/photo_copy.dart';
 
 class AddStashSheet extends ConsumerStatefulWidget {
   const AddStashSheet({super.key});
@@ -17,30 +17,35 @@ class AddStashSheet extends ConsumerStatefulWidget {
 }
 
 class _AddStashSheetState extends ConsumerState<AddStashSheet> {
-  String? _selectedItemId;
-  String _placeName = '';
-  String _placeHint = '';
-  File? _photo;
+  final _nameController = TextEditingController();
+  final _categoryController = TextEditingController();
+  final _placeController = TextEditingController();
+  final _hintController = TextEditingController();
+
+  final List<String> _recentPlaces = [];
+  Map<String, String>? _photo;
   bool _saving = false;
+  bool _returned = false;
 
   Future<void> _pickPhoto(ImageSource source) async {
     final picker = ImagePicker();
     try {
       final picked = await picker.pickImage(source: source);
       if (picked != null) {
-        final dir = await getApplicationDocumentsDirectory();
-        final file = await File(picked.path).copy('${dir.path}/${Uuid().v4()}.jpg');
-        setState(() => _photo = file);
+        final itemId = const Uuid().v4();
+        final result = await copyAndThumb(picked.path, itemId);
+        if (!mounted) return;
+        setState(() => _photo = result);
       }
-    } catch (e) {
+    } catch (_) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Camera or storage permission denied.'),
           action: SnackBarAction(
             label: 'Settings',
             onPressed: () {
-              // Open app settings
-              // ...existing code...
+              // AppSettings.openAppSettings();  // add package if you want
             },
           ),
         ),
@@ -49,89 +54,178 @@ class _AddStashSheetState extends ConsumerState<AddStashSheet> {
   }
 
   Future<void> _save() async {
-    if (_placeName.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Place name required')));
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Name required')));
       return;
     }
-    if (_selectedItemId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select or create an item')));
+    if (_placeController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Where its at? required')));
       return;
     }
-  setState(() => _saving = true);
-  HapticFeedback.lightImpact();
-    import 'package:flutter/services.dart';
+
+    setState(() => _saving = true);
     HapticFeedback.lightImpact();
-    final repo = ref.read(stashRepoProvider);
+
+    final itemBox = ref.read(itemBoxProvider);
+    final stashBox = ref.read(stashBoxProvider);
+
     final now = DateTime.now();
-    final stash = Stash(
-      id: Uuid().v4(),
-      itemId: _selectedItemId!,
-      placeName: _placeName.trim(),
-      placeHint: _placeHint.trim().isEmpty ? null : _placeHint.trim(),
-      photo: _photo?.uri.toString(),
-      storedOn: now,
-      lastChecked: now,
+    final itemId = const Uuid().v4();
+
+    final item = Item(
+      id: itemId,
+      name: _nameController.text.trim(),
+      category: _categoryController.text.trim().isEmpty
+          ? null
+          : _categoryController.text.trim(),
+      tags: const [],
+      photos: _photo != null ? [_photo!['path']!] : const [],
+      createdAt: now,
+      updatedAt: now,
     );
-    await repo.add(stash);
+    await itemBox.put(item.id, item);
+
+    final stash = Stash(
+      id: const Uuid().v4(),
+      itemId: item.id,
+      placeName: _placeController.text.trim(),
+      placeHint:
+          _hintController.text.trim().isEmpty ? null : _hintController.text.trim(),
+      photo: _photo != null ? _photo!['path'] : null,
+      storedOn: now,
+      lastChecked: null,
+      returnedOn: _returned ? now : null,
+    );
+    await stashBox.put(stash.id, stash);
+
+    if (!mounted) return;
     setState(() => _saving = false);
-    if (mounted) {
-      Navigator.of(context).pop(stash);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Stash saved!')));
-      // TODO: Navigate to ItemDetail
-    }
+    Navigator.of(context).pop(stash);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved!')));
   }
 
   @override
   Widget build(BuildContext context) {
-    final itemRepo = ref.watch(itemRepoProvider);
-    final items = itemRepo.list();
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<String>(
-              initialValue: _selectedItemId,
-              items: items.map((i) => DropdownMenuItem(value: i.id, child: Text(i.name))).toList(),
-              onChanged: (v) => setState(() => _selectedItemId = v),
-              decoration: const InputDecoration(labelText: 'Item'),
-            ),
-            TextButton(
-              child: const Text('Create new item'),
-              onPressed: () async {
-                final item = await showModalBottomSheet<Item>(context: context, builder: (_) => const AddItemSheet());
-                if (item != null) setState(() => _selectedItemId = item.id);
-              },
-            ),
-            TextField(
-              decoration: const InputDecoration(labelText: 'Place Name *'),
-              onChanged: (v) => _placeName = v,
-            ),
-            TextField(
-              decoration: const InputDecoration(labelText: 'Place Hint'),
-              onChanged: (v) => _placeHint = v,
-            ),
-            Row(
-              children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Snap Location Photo'),
-                  onPressed: () => _pickPhoto(ImageSource.camera),
-                ),
-                if (_photo != null)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Image.file(_photo!, width: 64, height: 64, fit: BoxFit.cover),
+    final insets = MediaQuery.of(context).viewInsets;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: insets.bottom > 0 ? 48.0 : 120.0,
+          bottom: insets.bottom + 16.0,
+          left: 16.0,
+          right: 16.0,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Switch(
+                    value: _returned,
+                    onChanged: (v) => setState(() => _returned = v),
+                    activeThumbColor: Colors.green,
                   ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _saving ? null : _save,
-              child: _saving ? const CircularProgressIndicator() : const Text('Save'),
-            ),
-          ],
+                  const Text('Returned', style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+              // Header: title centered, arrow in the top-right
+              SizedBox(
+                height: 48,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Text(
+                      'Add Stash',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    Positioned(
+                      right: 0,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_forward),
+                        tooltip: 'Close',
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Name *'),
+                textInputAction: TextInputAction.next,
+              ),
+
+              Autocomplete<String>(
+                optionsBuilder: (TextEditingValue tev) {
+                  if (tev.text.isEmpty) return const Iterable<String>.empty();
+                  final q = tev.text.toLowerCase();
+                  return _recentPlaces.where((p) => p.toLowerCase().contains(q));
+                },
+                onSelected: (String selection) {
+                  _placeController.text = selection;
+                },
+                fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                  // Mirror internal controller with ours
+                  if (controller.text.isEmpty && _placeController.text.isNotEmpty) {
+                    controller.text = _placeController.text;
+                  }
+                  return TextField(
+                    controller: _placeController,
+                    focusNode: focusNode,
+                    decoration: const InputDecoration(labelText: 'Where its at? *'),
+                    textInputAction: TextInputAction.next,
+                  );
+                },
+              ),
+
+              TextField(
+                controller: _categoryController,
+                decoration: const InputDecoration(labelText: 'Category'),
+                textInputAction: TextInputAction.next,
+              ),
+              TextField(
+                controller: _hintController,
+                decoration: const InputDecoration(labelText: 'Hint'),
+                textInputAction: TextInputAction.done,
+              ),
+
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.camera_alt),
+                    label: const Text('Snap Location Photo'),
+                    onPressed: () => _pickPhoto(ImageSource.camera),
+                  ),
+                  if (_photo != null)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Image.file(
+                        File(_photo!['thumbPath']!),
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _saving ? null : _save,
+                child: _saving
+                    ? const SizedBox(
+                        width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Save'),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:who_has_it/domain/item.dart';
-import 'package:who_has_it/domain/loan.dart';
-import 'package:who_has_it/domain/stash.dart';
+import 'package:where_its_at/domain/item.dart';
+import 'package:where_its_at/domain/loan.dart';
+import 'package:where_its_at/domain/stash.dart';
 import 'package:uuid/uuid.dart';
 
 void main() async {

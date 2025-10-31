@@ -8,9 +8,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:who_has_it/main.dart';
+import 'package:where_its_at/main.dart';
 
-void main() {
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
+
+void main() async {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  final dir = await getApplicationDocumentsDirectory();
+  Hive.init(dir.path);
+  await Hive.openBox('settings');
+
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());

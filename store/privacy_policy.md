@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Who Has It?** is designed for privacy and local-first use. We do not collect, track, or share any personal data.
+**Where its at?** is designed for privacy and local-first use. We do not collect, track, or share any personal data.
 
 - No account required; no cloud sync or analytics.
 - All data (items, loans, stashes, reminders) is stored locally on your device.

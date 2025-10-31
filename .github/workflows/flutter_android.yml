@@ -1,0 +1,40 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.9.2'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build unsigned release APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: where_its_at-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      # To build a signed APK, add secrets and keystore steps:
+      # - name: Decode keystore
+      #   run: echo "$KEYSTORE_BASE64" | base64 --decode > android/app/key.jks
+      # - name: Build signed APK
+      #   run: flutter build apk --release --no-shrink
+      #   env:
+      #     KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      #     KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      #     KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}

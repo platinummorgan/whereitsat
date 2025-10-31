@@ -3,7 +3,7 @@ import 'package:local_auth/local_auth.dart';
 
 class LockScreen extends StatefulWidget {
   final VoidCallback onUnlock;
-  const LockScreen({Key? key, required this.onUnlock}) : super(key: key);
+  const LockScreen({super.key, required this.onUnlock});
   @override
   State<LockScreen> createState() => _LockScreenState();
 }
@@ -20,8 +20,11 @@ class _LockScreenState extends State<LockScreen> {
         localizedReason: 'Unlock Who Has It',
         options: const AuthenticationOptions(biometricOnly: false, stickyAuth: true),
       );
-      if (didAuth) widget.onUnlock();
-      else setState(() => _error = 'Authentication failed');
+      if (didAuth) {
+        widget.onUnlock();
+      } else {
+        setState(() => _error = 'Authentication failed');
+      }
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {

@@ -1,4 +1,4 @@
-package com.platlabs.who_has_it
+package com.platlabs.where_its_at
 
 import io.flutter.embedding.android.FlutterActivity
 

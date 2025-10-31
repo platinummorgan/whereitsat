@@ -29,4 +29,16 @@ class Item extends HiveObject {
     required this.updatedAt,
   })  : photos = photos ?? [],
         tags = tags ?? [];
+
+  factory Item.fromJson(Map<String, dynamic> json) {
+    return Item(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      category: json['category'] as String?,
+      photos: (json['photos'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
 }

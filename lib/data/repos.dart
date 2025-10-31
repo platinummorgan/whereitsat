@@ -1,7 +1,9 @@
 import 'package:hive/hive.dart';
+// ...existing code...
 import '../domain/item.dart';
 import '../domain/loan.dart';
 import '../domain/stash.dart';
+// ...existing code...
 
 class ItemRepo {
   final Box<Item> box;
@@ -23,15 +25,15 @@ class ItemRepo {
 }
 
 class LoanRepo {
-  final Box<Loan> box;
-  LoanRepo(this.box);
+  Future<void> deleteLoan(String id) async {
+    await box.delete(id);
+  }
 
-  Future<void> add(Loan loan) async {
-    if (loan.person.trim().isEmpty) throw Exception('Person required');
+  Future<void> undoDelete(Loan loan) async {
     await box.put(loan.id, loan);
   }
 
-  Future<void> markReturned(String id, {String? returnPhoto, DateTime? returnedOn}) async {
+  Future<void> undoMarkReturned(String id) async {
     final loan = box.get(id);
     if (loan == null) return;
     final updated = Loan(
@@ -41,19 +43,56 @@ class LoanRepo {
       contact: loan.contact,
       lentOn: loan.lentOn,
       dueOn: loan.dueOn,
+      status: LoanStatus.out,
+      notes: loan.notes,
+      returnPhoto: loan.returnPhoto,
+      returnedOn: null,
+    );
+    await box.put(id, updated);
+  }
+  final Box<Loan> box;
+  LoanRepo(this.box);
+
+  Future<void> addLoan(Loan loan) async {
+    if (loan.person.trim().isEmpty) throw Exception('Person required');
+    await box.put(loan.id, loan);
+  }
+
+  Future<void> markReturned(String id, {String? returnPhotoPath, DateTime? returnedOn}) async {
+    final loan = box.get(id);
+    if (loan == null) return;
+    final now = returnedOn ?? DateTime.now();
+    final updated = Loan(
+      id: loan.id,
+      itemId: loan.itemId,
+      person: loan.person,
+      contact: loan.contact,
+      lentOn: loan.lentOn,
+      dueOn: loan.dueOn,
       status: LoanStatus.returned,
       notes: loan.notes,
-      returnPhoto: returnPhoto ?? loan.returnPhoto,
-      returnedOn: returnedOn ?? DateTime.now(),
+      returnPhoto: returnPhotoPath ?? loan.returnPhoto,
+      returnedOn: now,
+      where: loan.where,
+      category: loan.category,
     );
     await box.put(id, updated);
   }
 
-  List<Loan> listOut() => box.values.where((l) => l.status == LoanStatus.out).toList();
   List<Loan> listOverdue(DateTime now) => box.values.where((l) => l.status == LoanStatus.out && l.dueOn != null && l.dueOn!.isBefore(now)).toList();
+  List<Loan> listOutSorted() => box.values.where((l) => l.status == LoanStatus.out).toList()
+    ..sort((a, b) => ((a.dueOn ?? a.lentOn).compareTo(b.dueOn ?? b.lentOn)));
+  List<Loan> listReturnedSorted() => box.values.where((l) => l.status == LoanStatus.returned).toList()
+    ..sort((a, b) => (b.returnedOn ?? DateTime(0)).compareTo(a.returnedOn ?? DateTime(0)));
+
+  // Removed duplicate markReturned and listOut
 }
 
 class StashRepo {
+  List<String> recentPlaces([int count = 8]) {
+    final all = box.values.map((s) => s.placeName).toSet().toList();
+    return all.take(count).toList();
+  }
   final Box<Stash> box;
   StashRepo(this.box);
 
@@ -64,6 +103,7 @@ class StashRepo {
   Future<void> markFound(String id, {DateTime? lastChecked}) async {
     final stash = box.get(id);
     if (stash == null) return;
+    final timestamp = lastChecked ?? DateTime.now();
     final updated = Stash(
       id: stash.id,
       itemId: stash.itemId,
@@ -71,7 +111,8 @@ class StashRepo {
       placeHint: stash.placeHint,
       photo: stash.photo,
       storedOn: stash.storedOn,
-      lastChecked: lastChecked ?? DateTime.now(),
+      lastChecked: timestamp,
+      returnedOn: stash.returnedOn ?? timestamp,
     );
     await box.put(id, updated);
   }

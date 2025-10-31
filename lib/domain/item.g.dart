@@ -1,5 +1,10 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
+
 part of 'item.dart';
+
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
 
 class ItemAdapter extends TypeAdapter<Item> {
   @override
@@ -7,26 +12,48 @@ class ItemAdapter extends TypeAdapter<Item> {
 
   @override
   Item read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
     return Item(
-      id: reader.readString(),
-      name: reader.readString(),
-      category: reader.readBool() ? reader.readString() : null,
-      photos: reader.readList().cast<String>(),
-      tags: reader.readList().cast<String>(),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(reader.readInt()),
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(reader.readInt()),
+      id: fields[0] as String,
+      name: fields[1] as String,
+      category: fields[2] as String?,
+      photos: (fields[3] as List?)?.cast<String>(),
+      tags: (fields[4] as List?)?.cast<String>(),
+      createdAt: fields[5] as DateTime,
+      updatedAt: fields[6] as DateTime,
     );
   }
 
   @override
   void write(BinaryWriter writer, Item obj) {
-    writer.writeString(obj.id);
-    writer.writeString(obj.name);
-    writer.writeBool(obj.category != null);
-    if (obj.category != null) writer.writeString(obj.category!);
-    writer.writeList(obj.photos);
-    writer.writeList(obj.tags);
-    writer.writeInt(obj.createdAt.millisecondsSinceEpoch);
-    writer.writeInt(obj.updatedAt.millisecondsSinceEpoch);
+    writer
+      ..writeByte(7)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.name)
+      ..writeByte(2)
+      ..write(obj.category)
+      ..writeByte(3)
+      ..write(obj.photos)
+      ..writeByte(4)
+      ..write(obj.tags)
+      ..writeByte(5)
+      ..write(obj.createdAt)
+      ..writeByte(6)
+      ..write(obj.updatedAt);
   }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ItemAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
 }
