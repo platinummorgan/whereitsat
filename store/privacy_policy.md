@@ -1,12 +1,39 @@
-# Privacy Policy
+# Privacy Policy — Where It’s At
+**Effective date:** 2025-10-31  
+**Contact:** support@platovalabs.com
 
-**Where its at?** is designed for privacy and local-first use. We do not collect, track, or share any personal data.
+## Overview
+Where It’s At helps you track loaned items and personal stashes. This app is designed to work **offline** with **local device storage**. We do not collect, transmit, or sell your personal data.
 
-- No account required; no cloud sync or analytics.
-- All data (items, loans, stashes, reminders) is stored locally on your device.
-- Photos remain on your device unless you explicitly share or export them.
-- Notifications are generated and delivered locally; no data is sent externally.
-- No ads, no tracking, and no third-party analytics.
-- Exported files (CSV/PDF) are created locally and only shared if you choose.
+## Data We Store
+- **Items, Loans, Stashes:** Names, due dates, places, optional notes.
+- **Photos:** If you attach photos, they are stored locally on your device.
+- **Settings:** Theme, reminder time, lock settings.
 
-If you have questions, contact support via the app or store listing.
+All data is stored **on your device** (e.g., local database/files). You control export/backup features.
+
+## Permissions
+- **Camera / Photos:** Optional, only to attach item or return photos. Never uploaded by us.
+- **Notifications:** Optional, for due-date reminders.
+- **Local Storage:** To save your data and exports you initiate.
+
+## Data Sharing
+We do not share personal data with third parties. The app has no analytics SDKs, ad SDKs, or tracking SDKs.
+
+## Security
+Data remains on your device. You can enable App Lock (Face/Touch/PIN) in Settings. Please secure your device and any exports you create.
+
+## Retention & Deletion
+You may delete any entry or **Delete All Data** in Settings at any time. Uninstalling the app removes locally stored app data.
+
+## Children’s Privacy
+The app is a general-audience utility. We do not knowingly collect personal information from children.
+
+## Your Rights
+Because we do not host or process your data on our servers, requests like access/erasure must be performed locally by you using in-app tools (edit, delete, export).
+
+## Changes
+We may update this policy. We’ll change the “Effective date” above when we do.
+
+## Contact
+Questions? Email **support@platovalabs.com**.
